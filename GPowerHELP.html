@@ -55,16 +55,18 @@
   .btn-restart { padding: 10px 26px; border-radius: 8px; border: none; background: #0D7377; color: #fff; font-weight: 700; cursor: pointer; font-family: Georgia, serif; font-size: 14px; }
   .result-badges { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
   .badge { flex: 1; min-width: 120px; border-radius: 12px; padding: 18px 16px; text-align: center; }
-  .badge .num { font-size: 40px; font-weight: 800; color: #1A3E6B; line-height: 1; }
+  .badge .num { font-size: 38px; font-weight: 800; color: #1A3E6B; line-height: 1; }
   .badge .lbl { font-size: 12px; color: #64748B; margin-top: 5px; font-weight: 500; }
   .result-card { border-radius: 10px; padding: 16px 18px; margin-bottom: 12px; }
   .result-card.blue { background: #EBF4FB; border-left: 5px solid #1A3E6B; }
   .result-card.teal { background: #E0F2F1; border-left: 5px solid #0D7377; }
   .result-card.gold { background: #FFFDE7; border-left: 5px solid #B8860B; }
+  .result-card.red { background: #FFEBEE; border-left: 5px solid #8B1A1A; }
   .result-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
   .result-card.blue h3 { color: #1A3E6B; }
   .result-card.teal h3 { color: #0D7377; }
   .result-card.gold h3 { color: #B8860B; }
+  .result-card.red h3 { color: #8B1A1A; }
   .result-card p { font-size: 13px; line-height: 1.7; color: #1E293B; }
   .proposal-box { background: #F1F5F9; border-radius: 8px; padding: 12px 14px; font-size: 12px; font-style: italic; line-height: 1.8; color: #1E293B; margin-bottom: 8px; }
   .ref-text { font-size: 11px; color: #64748B; line-height: 1.6; }
@@ -74,9 +76,14 @@
   .compare-cell .c-label { font-size: 11px; color: #64748B; }
   .compare-cell .c-num { font-size: 22px; font-weight: 800; color: #1A3E6B; }
   .compare-cell .c-sub { font-size: 10px; color: #64748B; }
+  .pop-input-wrap { display: flex; align-items: center; gap: 12px; margin: 14px 0 8px; }
+  .pop-input-wrap input { width: 160px; font-size: 16px; }
+  .fpc-result { border-radius: 8px; padding: 12px 14px; margin-top: 10px; font-size: 13px; line-height: 1.6; display: none; }
+  .fpc-ok { background: #E8F5E9; border-left: 4px solid #0D7377; }
+  .fpc-warn { background: #FFEBEE; border-left: 4px solid #8B1A1A; }
   .hidden { display: none; }
   .footnote { text-align: center; margin-top: 14px; font-size: 11px; color: #64748B; font-style: italic; }
-  @media (max-width: 480px) { .card { padding: 20px 18px; } h2 { font-size: 18px; } .badge .num { font-size: 32px; } }
+  @media (max-width: 480px) { .card { padding: 20px 18px; } h2 { font-size: 18px; } .badge .num { font-size: 28px; } }
 </style>
 </head>
 <body>
@@ -88,7 +95,6 @@
   </div>
 
   <div class="card">
-    <!-- Progress Bar -->
     <div class="progress" id="progressBar"></div>
 
     <!-- STEP 1: Study Type -->
@@ -111,7 +117,6 @@
     <div id="step2" class="hidden">
       <h2>What effect size do you expect?</h2>
       <p class="subtitle">You cannot know this exactly in advance. Use one of these three approaches to make a reasonable, defensible estimate.</p>
-
       <button class="choice-btn" onclick="selectEffectSource('preset', this)">
         <div class="radio-row"><div class="radio-circle"><div class="radio-dot"></div></div><div><div class="btn-label">Use a Standard Benchmark</div><div class="btn-desc">Small, medium, or large based on Cohen's conventions</div></div></div>
       </button>
@@ -121,14 +126,12 @@
       <button class="choice-btn" onclick="selectEffectSource('mcid', this)">
         <div class="radio-row"><div class="radio-circle"><div class="radio-dot"></div></div><div><div class="btn-label">I Have a Clinically Meaningful Difference</div><div class="btn-desc">I know what difference would matter to my patients</div></div></div>
       </button>
-
       <div id="preset-panel" class="hidden section-card">
         <h3>Select a benchmark:</h3>
         <div class="small-btns" id="presetBtns"></div>
         <div id="presetDesc" style="margin-top:10px;background:#E8F5E9;padding:8px 12px;border-radius:8px;font-size:13px;display:none;"></div>
         <div class="tip"><strong>Tip:</strong> If unsure, start with medium. It is the most commonly found effect size in nursing intervention research.</div>
       </div>
-
       <div id="literature-panel" class="hidden section-card">
         <h3 id="litLabel">Enter Cohen's d from your literature review:</h3>
         <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
@@ -137,7 +140,6 @@
         </div>
         <div class="tip"><strong>Tip:</strong> Use the effect size from a study with a similar population and intervention. If multiple studies exist, use the average or the most conservative (smallest) value.</div>
       </div>
-
       <div id="mcid-panel" class="hidden section-card">
         <h3>Convert your clinically meaningful difference to an effect size:</h3>
         <p style="font-size:12px;color:#64748B;margin:6px 0 12px;line-height:1.5;">Enter the smallest difference that would matter clinically and the standard deviation from prior literature. We will calculate Cohen's d for you.</p>
@@ -157,7 +159,6 @@
     <div id="step3" class="hidden">
       <h2>Set your study parameters</h2>
       <p class="subtitle">These are already set to the most commonly accepted values in nursing research. Adjust only if your proposal requires it.</p>
-
       <div class="section-card" style="border-left-color:#1A3E6B;">
         <h3>Significance Level (Alpha)</h3>
         <p style="font-size:12px;color:#64748B;margin-bottom:10px;line-height:1.5;">Your tolerance for a false alarm (Type I error). A 0.05 level means you accept a 5% chance of saying something works when it does not.</p>
@@ -166,7 +167,6 @@
           <button class="small-btn" id="alpha01" onclick="setAlpha('0.01', this)">alpha = 0.01<span class="sub">More stringent</span></button>
         </div>
       </div>
-
       <div class="section-card" style="border-left-color:#0D7377;">
         <h3>Desired Power</h3>
         <p style="font-size:12px;color:#64748B;margin-bottom:10px;line-height:1.5;">The probability your study will detect a real effect if one truly exists. Think of it as your pulse oximeter's sensitivity setting. Higher power means fewer missed findings but requires more participants.</p>
@@ -178,17 +178,50 @@
       </div>
     </div>
 
-    <!-- STEP 4: Results -->
+    <!-- STEP 4: Population Size -->
     <div id="step4" class="hidden">
+      <h2>How large is your total available population?</h2>
+      <p class="subtitle">This is one of the most important and most overlooked questions in nursing research planning. The standard sample size formula assumes you have access to an unlimited number of patients. In reality, nursing studies are often conducted in a single ICU, one unit, or over a limited time window, and the total number of available patients may be quite small.</p>
+
+      <div class="section-card" style="border-left-color:#1A3E6B;">
+        <h3>Why this matters</h3>
+        <p style="font-size:13px;color:#1E293B;line-height:1.7;">The formula used in the previous steps calculated how many participants you need based on your effect size and power alone. It does not know whether that number is realistic for your setting.</p>
+        <p style="font-size:13px;color:#1E293B;line-height:1.7;margin-top:8px;">For example, if the formula says you need 64 participants but only 30 ICU patients come through your unit during your study window, your study is underpowered before it begins. This must be addressed in your proposal.</p>
+        <p style="font-size:13px;color:#1E293B;line-height:1.7;margin-top:8px;">On the other hand, when your total available population is known and limited, a statistical correction called the <strong>Finite Population Correction (FPC)</strong> can actually reduce the number of participants you need. This is because you are sampling a large proportion of the total group, which gives you more statistical precision than sampling from an unlimited pool.</p>
+        <div class="tip"><strong>How to estimate your population size:</strong> Count the total number of patients who realistically could be enrolled during your study window. For example, if your ICU admits roughly 10 patients per week and your study runs 8 weeks, your available population is approximately 80 patients. If you are studying all ER visits over three months at a large hospital, your population may be in the thousands.</div>
+      </div>
+
+      <div class="section-card" style="border-left-color:#2E75B6;">
+        <h3>Do you know your total available population size?</h3>
+        <button class="choice-btn" id="popYesBtn" onclick="selectPopKnown(true, this)" style="margin-top:10px;">
+          <div class="radio-row"><div class="radio-circle"><div class="radio-dot"></div></div><div><div class="btn-label">Yes, I know approximately how many patients will be available</div><div class="btn-desc">I will enter that number and get a corrected sample size</div></div></div>
+        </button>
+        <button class="choice-btn" id="popNoBtn" onclick="selectPopKnown(false, this)">
+          <div class="radio-row"><div class="radio-circle"><div class="radio-dot"></div></div><div><div class="btn-label">No, my population is very large or unknown</div><div class="btn-desc">e.g., all patients across multiple sites, national registry data, or population is too large to count</div></div></div>
+        </button>
+
+        <div id="popInputArea" class="hidden" style="margin-top:14px;">
+          <div style="font-size:13px;color:#1E293B;margin-bottom:6px;">Enter your estimated total available population:</div>
+          <div class="pop-input-wrap">
+            <input type="number" id="popInput" min="10" step="1" placeholder="e.g. 80" oninput="calcFPC()">
+            <span style="font-size:13px;color:#64748B;">total patients available</span>
+          </div>
+          <div class="fpc-result" id="fpcResult"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5: Results -->
+    <div id="step5" class="hidden">
       <h2>Your Sample Size Results</h2>
       <p class="subtitle">Here is what the calculation tells you about your study design.</p>
       <div class="result-badges" id="resultBadges"></div>
+      <div id="fpcWarning" class="result-card red hidden"></div>
       <div class="result-card blue" id="resultInterpret"></div>
       <div class="result-card teal" id="resultProposal"></div>
       <div class="result-card gold" id="resultCompare"></div>
     </div>
 
-    <!-- Navigation -->
     <div class="nav">
       <button class="btn-back hidden" id="btnBack" onclick="goBack()">Back</button>
       <div></div>
@@ -199,9 +232,9 @@
 </div>
 
 <script>
-const state = { studyType: null, effectSource: null, effectValue: null, alpha: '0.05', power: '0.80' };
+const state = { studyType: null, effectSource: null, effectValue: null, alpha: '0.05', power: '0.80', popKnown: null, popSize: null };
 let currentStep = 0;
-const stepLabels = ['Study Type', 'Effect Size', 'Settings', 'Results'];
+const stepLabels = ['Study Type', 'Effect Size', 'Settings', 'Population', 'Results'];
 
 const presetData = {
   two_group: [
@@ -249,39 +282,33 @@ function updateNav() {
   const back = document.getElementById('btnBack');
   const next = document.getElementById('btnNext');
   back.classList.toggle('hidden', currentStep === 0);
-  if (currentStep === 3) { next.style.display = 'none'; } else { next.style.display = 'block'; }
-  next.textContent = currentStep === 2 ? 'Calculate' : 'Continue';
-  const ready = canProceed();
-  next.classList.toggle('ready', ready);
+  if (currentStep === 4) { next.style.display = 'none'; } else { next.style.display = 'block'; }
+  next.textContent = currentStep === 3 ? 'Calculate' : 'Continue';
+  next.classList.toggle('ready', canProceed());
 }
 
 function canProceed() {
   if (currentStep === 0) return !!state.studyType;
   if (currentStep === 1) return state.effectValue !== null && state.effectValue > 0;
   if (currentStep === 2) return true;
+  if (currentStep === 3) return state.popKnown !== null && (state.popKnown === false || (state.popSize !== null && state.popSize > 0));
   return false;
 }
 
 function showStep(n) {
-  for (let i = 0; i < 4; i++) document.getElementById('step' + (i + 1)).classList.add('hidden');
+  for (let i = 0; i < 5; i++) document.getElementById('step' + (i + 1)).classList.add('hidden');
   document.getElementById('step' + (n + 1)).classList.remove('hidden');
   currentStep = n;
   renderProgress();
   updateNav();
-  if (n === 3) buildResults();
+  if (n === 4) buildResults();
 }
 
-function goNext() {
-  if (!canProceed()) return;
-  showStep(currentStep + 1);
-  if (currentStep === 1) buildPresets();
-}
-
+function goNext() { if (!canProceed()) return; showStep(currentStep + 1); if (currentStep === 1) buildPresets(); }
 function goBack() { showStep(currentStep - 1); }
 
 function selectStudyType(type, btn) {
-  state.studyType = type;
-  state.effectValue = null;
+  state.studyType = type; state.effectValue = null;
   document.querySelectorAll('#step1 .choice-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
   const labels = { 'two-group': 'Comparing Two Groups', 'paired': 'Before and After', 'correlation': 'Looking at a Relationship' };
@@ -292,8 +319,7 @@ function selectStudyType(type, btn) {
 }
 
 function selectEffectSource(source, btn) {
-  state.effectSource = source;
-  state.effectValue = null;
+  state.effectSource = source; state.effectValue = null;
   document.querySelectorAll('#step2 > .choice-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
   document.getElementById('preset-panel').classList.add('hidden');
@@ -332,8 +358,7 @@ function selectPreset(val, desc, btn) {
   document.querySelectorAll('#presetBtns .small-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
   const d = document.getElementById('presetDesc');
-  d.style.display = 'block';
-  d.textContent = desc;
+  d.style.display = 'block'; d.textContent = desc;
   updateNav();
 }
 
@@ -355,8 +380,7 @@ function calcMCID() {
 }
 
 function useMCID() {
-  const d = parseFloat(document.getElementById('mcidVal').textContent);
-  state.effectValue = d;
+  state.effectValue = parseFloat(document.getElementById('mcidVal').textContent);
   updateNav();
 }
 
@@ -372,7 +396,36 @@ function setPower(val, btn) {
   btn.classList.add('selected');
 }
 
-// ---- Stats math ----
+function selectPopKnown(known, btn) {
+  state.popKnown = known;
+  document.querySelectorAll('#step4 .section-card:nth-child(2) .choice-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const inputArea = document.getElementById('popInputArea');
+  if (known) { inputArea.classList.remove('hidden'); } else { inputArea.classList.add('hidden'); state.popSize = null; document.getElementById('fpcResult').style.display = 'none'; }
+  updateNav();
+}
+
+function calcFPC() {
+  const pop = parseInt(document.getElementById('popInput').value);
+  const baseN = getResult(state.effectValue).total;
+  const res = document.getElementById('fpcResult');
+  if (!isNaN(pop) && pop > 0) {
+    state.popSize = pop;
+    const adjusted = Math.ceil(baseN / (1 + (baseN / pop)));
+    const pct = Math.round((adjusted / pop) * 100);
+    res.style.display = 'block';
+    if (adjusted >= pop) {
+      res.className = 'fpc-result fpc-warn';
+      res.innerHTML = '<strong>Important notice:</strong> Your required sample size of <strong>' + baseN + '</strong> equals or exceeds your total available population of <strong>' + pop + '</strong>. This means the study as currently designed cannot be adequately powered within your setting. You will need to either expand your study window to enroll more patients, combine sites, reduce the scope of the study, or acknowledge limited power as a significant limitation in your proposal.';
+    } else {
+      res.className = 'fpc-result fpc-ok';
+      res.innerHTML = '<strong>Adjusted sample size: ' + adjusted + ' participants</strong> (' + pct + '% of your available population of ' + pop + ')<br>Because your population is known and limited, the Finite Population Correction reduced your required sample from <strong>' + baseN + '</strong> to <strong>' + adjusted + '</strong>. This adjusted number will be used in your results.';
+    }
+    updateNav();
+  } else { state.popSize = null; res.style.display = 'none'; updateNav(); }
+}
+
+// Stats math
 const Z_ALPHA = { '0.05': 1.959964, '0.01': 2.576 };
 const Z_BETA  = { '0.80': 0.8416,   '0.90': 1.2816 };
 
@@ -395,7 +448,7 @@ function getResult(val) {
   if (state.studyType === 'paired') return calcPaired(val);
   return calcCorrelation(val);
 }
-
+function applyFPC(n, pop) { return Math.ceil(n / (1 + (n / pop))); }
 function sizeLabel(val) {
   if (state.studyType === 'correlation') return val >= 0.5 ? 'large' : val >= 0.3 ? 'medium' : 'small';
   return val >= 0.8 ? 'large' : val >= 0.5 ? 'medium' : 'small';
@@ -403,34 +456,61 @@ function sizeLabel(val) {
 
 function buildResults() {
   const val = state.effectValue;
-  const r = getResult(val);
-  const typeLabels = { 'two-group': 'Comparing Two Groups', 'paired': 'Before and After', 'correlation': 'Looking at a Relationship' };
+  const baseResult = getResult(val);
   const sym = state.studyType === 'correlation' ? 'r' : 'd';
   const sl = sizeLabel(val);
+  const typeLabels = { 'two-group': 'Comparing Two Groups', 'paired': 'Before and After', 'correlation': 'Looking at a Relationship' };
+
+  // Apply FPC if population is known
+  let finalN = baseResult.total;
+  let finalPerGroup = baseResult.perGroup;
+  let fpcApplied = false;
+  let infeasible = false;
+
+  if (state.popKnown && state.popSize) {
+    if (baseResult.total >= state.popSize) {
+      infeasible = true;
+      finalN = baseResult.total;
+    } else {
+      finalN = applyFPC(baseResult.total, state.popSize);
+      finalPerGroup = baseResult.perGroup ? Math.ceil(applyFPC(baseResult.total, state.popSize) / 2) : null;
+      fpcApplied = true;
+    }
+  }
 
   // Badges
   const badges = document.getElementById('resultBadges');
   badges.innerHTML = '';
   const badgeData = [
-    { num: r.total, lbl: 'Total participants needed', color: '#D5E8F0' },
-    ...(r.perGroup ? [{ num: r.perGroup, lbl: 'Per group', color: '#E8F5E9' }] : []),
-    { num: (parseFloat(state.power) * 100) + '%', lbl: 'Statistical power', color: '#FFFDE7' }
+    { num: finalN, lbl: fpcApplied ? 'Adjusted participants needed' : 'Total participants needed', color: '#D5E8F0' },
+    ...(finalPerGroup ? [{ num: finalPerGroup, lbl: 'Per group', color: '#E8F5E9' }] : []),
+    { num: (parseFloat(state.power) * 100) + '%', lbl: 'Statistical power', color: '#FFFDE7' },
+    ...(fpcApplied ? [{ num: state.popSize, lbl: 'Total available population', color: '#E0F2F1' }] : [])
   ];
   badgeData.forEach(b => {
     badges.innerHTML += '<div class="badge" style="background:' + b.color + '"><div class="num">' + b.num + '</div><div class="lbl">' + b.lbl + '</div></div>';
   });
 
+  // Feasibility warning
+  const fpcWarn = document.getElementById('fpcWarning');
+  if (infeasible) {
+    fpcWarn.classList.remove('hidden');
+    fpcWarn.innerHTML = '<h3>Study Feasibility Concern</h3><p>Your required sample size of <strong>' + baseResult.total + '</strong> equals or exceeds your total available population of <strong>' + state.popSize + '</strong>. As currently designed, this study cannot be adequately powered within your setting. Consider expanding your enrollment window, adding a second site, or acknowledging limited power as a significant limitation in your proposal.</p>';
+  } else { fpcWarn.classList.add('hidden'); }
+
   // Interpretation
-  const perGrpText = r.perGroup ? ' (' + r.perGroup + ' in each group)' : '';
+  const perGrpText = finalPerGroup ? ' (' + finalPerGroup + ' in each group)' : '';
+  const fpcNote = fpcApplied ? ' The Finite Population Correction was applied because your total available population is known (' + state.popSize + ' patients), which reduced the required sample from ' + baseResult.total + ' to ' + finalN + '.' : '';
   document.getElementById('resultInterpret').innerHTML =
     '<h3>What this means in nursing terms:</h3>' +
-    '<p>For a <strong>' + typeLabels[state.studyType] + '</strong> study expecting a <strong>' + sl + ' effect (' + sym + ' = ' + val + ')</strong>, with alpha = <strong>' + state.alpha + '</strong> and <strong>' + (parseFloat(state.power) * 100) + '% power</strong>, you need to enroll at least <strong style="font-size:16px;color:#1A3E6B;">' + r.total + ' participants' + perGrpText + '</strong>.</p>' +
+    '<p>For a <strong>' + typeLabels[state.studyType] + '</strong> study expecting a <strong>' + sl + ' effect (' + sym + ' = ' + val + ')</strong>, with alpha = <strong>' + state.alpha + '</strong> and <strong>' + (parseFloat(state.power) * 100) + '% power</strong>, you need to enroll at least <strong style="font-size:16px;color:#1A3E6B;">' + finalN + ' participants' + perGrpText + '</strong>.' + fpcNote + '</p>' +
     '<p style="margin-top:10px;">If the effect you estimated truly exists, your study has a <strong>' + (parseFloat(state.power) * 100) + '% chance of detecting it</strong>. A smaller sample significantly increases your risk of a Type II error.</p>';
 
   // Proposal text
+  const fpcSentence = fpcApplied ? ' A finite population correction was applied given the known available population of ' + state.popSize + ' patients, yielding an adjusted required sample of ' + finalN + ' participants.' : '';
   document.getElementById('resultProposal').innerHTML =
     '<h3>What to write in your proposal:</h3>' +
-    '<div class="proposal-box">"A power analysis was conducted using G*Power (Faul et al., 2007). Based on a ' + sl + ' expected effect size (' + sym + ' = ' + val + ') derived from prior literature, an alpha level of ' + state.alpha + ', and a desired power of ' + state.power + ', a minimum sample size of ' + r.total + ' participants' + perGrpText + ' is required to achieve adequate statistical power."</div>' +
+    '<div class="proposal-box">"A power analysis was conducted using G*Power (Faul et al., 2007). Based on a ' + sl + ' expected effect size (' + sym + ' = ' + val + ') derived from prior literature, an alpha level of ' + state.alpha + ', and a desired power of ' + state.power + ', a minimum sample size of ' + baseResult.total + ' participants' + perGrpText + ' is required to achieve adequate statistical power.' + fpcSentence + '"</div>' +
     '<div class="ref-text">Reference: Faul, F., Erdfelder, E., Lang, A.-G., &amp; Buchner, A. (2007). G*Power 3: A flexible statistical power analysis program for the social, behavioral, and biomedical sciences. <em>Behavior Research Methods, 39</em>(2), 175-191. https://doi.org/10.3758/BF03193146</div>';
 
   // Compare grid
@@ -438,33 +518,27 @@ function buildResults() {
   let grid = '<div class="compare-grid">';
   vals.forEach(v => {
     const rv = getResult(parseFloat(v));
+    const dispN = (fpcApplied && rv.total < state.popSize) ? applyFPC(rv.total, state.popSize) : rv.total;
     const cur = parseFloat(v) === val;
-    grid += '<div class="compare-cell ' + (cur ? 'current' : '') + '"><div class="c-label">' + sym + ' = ' + v + '</div><div class="c-num">' + rv.total + '</div><div class="c-sub">participants</div></div>';
+    grid += '<div class="compare-cell ' + (cur ? 'current' : '') + '"><div class="c-label">' + sym + ' = ' + v + '</div><div class="c-num">' + dispN + '</div><div class="c-sub">participants</div></div>';
   });
-  grid += '</div><p style="font-size:12px;color:#64748B;margin-top:8px;">Notice how dramatically sample size changes with effect size. This is why your estimate matters so much.</p>';
+  grid += '</div><p style="font-size:12px;color:#64748B;margin-top:8px;">Notice how dramatically sample size changes with effect size. This is why your estimate matters so much.' + (fpcApplied ? ' Values shown are adjusted for your population size.' : '') + '</p>';
   document.getElementById('resultCompare').innerHTML = '<h3>Compare effect sizes side by side:</h3>' + grid;
 
   // Nav
   document.getElementById('btnNext').style.display = 'none';
-  const back = document.getElementById('btnBack');
-  back.classList.remove('hidden');
+  document.getElementById('btnBack').classList.remove('hidden');
   const nav = document.querySelector('.nav');
   if (!document.getElementById('btnRestart')) {
     const rb = document.createElement('button');
-    rb.className = 'btn-restart';
-    rb.id = 'btnRestart';
-    rb.textContent = 'Start Over';
+    rb.className = 'btn-restart'; rb.id = 'btnRestart'; rb.textContent = 'Start Over';
     rb.onclick = () => {
-      state.studyType = null; state.effectSource = null; state.effectValue = null; state.alpha = '0.05'; state.power = '0.80';
+      Object.assign(state, { studyType: null, effectSource: null, effectValue: null, alpha: '0.05', power: '0.80', popKnown: null, popSize: null });
       document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
-      document.getElementById('step1confirm').classList.add('hidden');
-      document.getElementById('preset-panel').classList.add('hidden');
-      document.getElementById('literature-panel').classList.add('hidden');
-      document.getElementById('mcid-panel').classList.add('hidden');
+      ['step1confirm','preset-panel','literature-panel','mcid-panel','popInputArea'].forEach(id => document.getElementById(id).classList.add('hidden'));
       document.getElementById('mcidResult').style.display = 'none';
-      document.getElementById('litInput').value = '';
-      document.getElementById('mcidMean').value = '';
-      document.getElementById('mcidSD').value = '';
+      document.getElementById('fpcResult').style.display = 'none';
+      ['litInput','mcidMean','mcidSD','popInput'].forEach(id => document.getElementById(id).value = '');
       document.getElementById('btnNext').style.display = 'block';
       rb.remove();
       showStep(0);
@@ -473,7 +547,6 @@ function buildResults() {
   }
 }
 
-// Init
 renderProgress();
 updateNav();
 </script>
