@@ -1,505 +1,481 @@
-import { useState } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nurse Sample Size Calculator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Georgia, serif; background: linear-gradient(135deg, #EBF4FB 0%, #F8FAFC 50%, #EBF4FB 100%); min-height: 100vh; padding: 20px; color: #1E293B; }
+  .container { max-width: 680px; margin: 0 auto; }
+  .header { text-align: center; padding: 24px 0 16px; }
+  .header .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 3px; color: #2E75B6; text-transform: uppercase; margin-bottom: 8px; }
+  .header h1 { color: #1A3E6B; font-size: 26px; font-weight: 800; margin-bottom: 8px; line-height: 1.2; }
+  .header p { color: #64748B; font-size: 14px; }
+  .card { background: #fff; border-radius: 16px; padding: 28px 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); border: 1px solid #D5E8F0; margin-bottom: 16px; }
+  .progress { display: flex; align-items: center; margin-bottom: 28px; }
+  .step-dot { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; transition: all 0.3s; }
+  .step-dot.done { background: #0D7377; color: #fff; border: 2px solid #0D7377; }
+  .step-dot.active { background: #2E75B6; color: #fff; border: 2px solid #2E75B6; }
+  .step-dot.inactive { background: #F1F5F9; color: #64748B; border: 2px solid #CBD5E1; }
+  .step-label { font-size: 10px; margin-top: 4px; text-align: center; white-space: nowrap; }
+  .step-label.active { font-weight: 700; color: #2E75B6; }
+  .step-label.inactive { color: #64748B; }
+  .step-connector { flex: 1; height: 2px; margin: 0 6px 16px; transition: background 0.3s; }
+  .step-wrap { display: flex; flex-direction: column; align-items: center; }
+  h2 { color: #1A3E6B; font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { color: #64748B; font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
+  .choice-btn { display: block; width: 100%; text-align: left; padding: 13px 16px; margin-bottom: 10px; border-radius: 10px; border: 2px solid #CBD5E1; background: #fff; cursor: pointer; transition: all 0.2s; font-family: Georgia, serif; }
+  .choice-btn:hover { border-color: #2E75B6; background: #EBF4FB; }
+  .choice-btn.selected { border-color: #2E75B6; background: #EBF4FB; box-shadow: 0 0 0 3px #D5E8F0; }
+  .choice-btn .btn-label { font-weight: 600; color: #1E293B; font-size: 15px; }
+  .choice-btn .btn-desc { font-size: 12px; color: #64748B; margin-top: 3px; font-style: italic; }
+  .radio-row { display: flex; align-items: flex-start; gap: 10px; }
+  .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #CBD5E1; flex-shrink: 0; margin-top: 3px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  .choice-btn.selected .radio-circle { border-color: #2E75B6; background: #2E75B6; }
+  .radio-dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; }
+  .section-card { border-radius: 10px; padding: 16px 18px; margin-bottom: 14px; border-left: 5px solid #2E75B6; background: #F8FAFC; }
+  .section-card h3 { font-size: 14px; font-weight: 700; color: #1A3E6B; margin-bottom: 8px; }
+  .small-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .small-btn { padding: 8px 16px; border-radius: 8px; border: 2px solid #CBD5E1; background: #fff; cursor: pointer; font-family: Georgia, serif; font-size: 13px; font-weight: 500; color: #1E293B; transition: all 0.2s; }
+  .small-btn:hover { border-color: #2E75B6; }
+  .small-btn.selected { border-color: #2E75B6; background: #EBF4FB; font-weight: 700; color: #2E75B6; }
+  .small-btn .sub { font-size: 10px; color: #64748B; font-weight: 400; display: block; }
+  input[type=number] { padding: 8px 12px; border-radius: 8px; border: 2px solid #D5E8F0; font-size: 15px; font-family: Georgia, serif; outline: none; width: 130px; }
+  input[type=number]:focus { border-color: #2E75B6; }
+  .tip { background: #FFFDE7; border-left: 4px solid #B8860B; padding: 9px 13px; border-radius: 0 8px 8px 0; font-size: 12px; color: #5D4037; margin-top: 12px; line-height: 1.5; }
+  .tip strong { font-weight: 700; }
+  .mcid-result { background: #E8F5E9; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-top: 8px; display: none; }
+  .use-btn { margin-left: 12px; padding: 4px 12px; border-radius: 6px; background: #0D7377; color: #fff; border: none; cursor: pointer; font-size: 12px; font-family: Georgia, serif; }
+  .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 18px; border-top: 1px solid #D5E8F0; }
+  .btn-back { padding: 10px 22px; border-radius: 8px; border: 2px solid #D5E8F0; background: #fff; color: #1A3E6B; font-weight: 600; cursor: pointer; font-family: Georgia, serif; font-size: 14px; }
+  .btn-next { padding: 10px 26px; border-radius: 8px; border: none; background: #CBD5E1; color: #fff; font-weight: 700; cursor: not-allowed; font-family: Georgia, serif; font-size: 14px; transition: background 0.2s; }
+  .btn-next.ready { background: #2E75B6; cursor: pointer; }
+  .btn-next.ready:hover { background: #1A3E6B; }
+  .btn-restart { padding: 10px 26px; border-radius: 8px; border: none; background: #0D7377; color: #fff; font-weight: 700; cursor: pointer; font-family: Georgia, serif; font-size: 14px; }
+  .result-badges { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+  .badge { flex: 1; min-width: 120px; border-radius: 12px; padding: 18px 16px; text-align: center; }
+  .badge .num { font-size: 40px; font-weight: 800; color: #1A3E6B; line-height: 1; }
+  .badge .lbl { font-size: 12px; color: #64748B; margin-top: 5px; font-weight: 500; }
+  .result-card { border-radius: 10px; padding: 16px 18px; margin-bottom: 12px; }
+  .result-card.blue { background: #EBF4FB; border-left: 5px solid #1A3E6B; }
+  .result-card.teal { background: #E0F2F1; border-left: 5px solid #0D7377; }
+  .result-card.gold { background: #FFFDE7; border-left: 5px solid #B8860B; }
+  .result-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+  .result-card.blue h3 { color: #1A3E6B; }
+  .result-card.teal h3 { color: #0D7377; }
+  .result-card.gold h3 { color: #B8860B; }
+  .result-card p { font-size: 13px; line-height: 1.7; color: #1E293B; }
+  .proposal-box { background: #F1F5F9; border-radius: 8px; padding: 12px 14px; font-size: 12px; font-style: italic; line-height: 1.8; color: #1E293B; margin-bottom: 8px; }
+  .ref-text { font-size: 11px; color: #64748B; line-height: 1.6; }
+  .compare-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+  .compare-cell { border-radius: 10px; padding: 10px 14px; text-align: center; min-width: 90px; border: 2px solid #CBD5E1; background: #F1F5F9; }
+  .compare-cell.current { border-color: #2E75B6; background: #EBF4FB; }
+  .compare-cell .c-label { font-size: 11px; color: #64748B; }
+  .compare-cell .c-num { font-size: 22px; font-weight: 800; color: #1A3E6B; }
+  .compare-cell .c-sub { font-size: 10px; color: #64748B; }
+  .hidden { display: none; }
+  .footnote { text-align: center; margin-top: 14px; font-size: 11px; color: #64748B; font-style: italic; }
+  @media (max-width: 480px) { .card { padding: 20px 18px; } h2 { font-size: 18px; } .badge .num { font-size: 32px; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="eyebrow">Nursing Research Tools</div>
+    <h1>Sample Size Calculator</h1>
+    <p>Designed for nurses planning quantitative EBP proposals</p>
+  </div>
 
-// Statistical helper functions
-function zScore(p) {
-  // Rational approximation for inverse normal CDF
-  const a = [2.515517, 0.802853, 0.010328];
-  const b = [1.432788, 0.189269, 0.001308];
-  const t = Math.sqrt(-2 * Math.log(p));
-  return t - (a[0] + a[1] * t + a[2] * t * t) / (1 + b[0] * t + b[1] * t * t + b[2] * t * t * t);
+  <div class="card">
+    <!-- Progress Bar -->
+    <div class="progress" id="progressBar"></div>
+
+    <!-- STEP 1: Study Type -->
+    <div id="step1">
+      <h2>What kind of study are you planning?</h2>
+      <p class="subtitle">Choose the design that best matches your EBP proposal or quantitative project.</p>
+      <button class="choice-btn" onclick="selectStudyType('two-group', this)">
+        <div class="radio-row"><div class="radio-circle"><div class="radio-dot"></div></div><div><div class="btn-label">Comparing Two Groups <span style="font-size:12px;color:#64748B;font-weight:400;">(uses Cohen's d)</span></div><div class="btn-desc">e.g., patients who received an intervention vs. a control group</div></div></div>
+      </button>
+      <button class="choice-btn" onclick="selectStudyType('paired', this)">
+        <div class="radio-row"><div class="radio-circle"><div class="radio-dot"></div></div><div><div class="btn-label">Before and After (Same Patients) <span style="font-size:12px;color:#64748B;font-weight:400;">(uses Cohen's d)</span></div><div class="btn-desc">e.g., measuring the same patients before and after your intervention</div></div></div>
+      </button>
+      <button class="choice-btn" onclick="selectStudyType('correlation', this)">
+        <div class="radio-row"><div class="radio-circle"><div class="radio-dot"></div></div><div><div class="btn-label">Looking at a Relationship <span style="font-size:12px;color:#64748B;font-weight:400;">(uses Pearson r)</span></div><div class="btn-desc">e.g., is there an association between two variables like sleep and anxiety?</div></div></div>
+      </button>
+      <div id="step1confirm" class="hidden" style="background:#E0F2F1;border-left:4px solid #0D7377;padding:10px 14px;border-radius:0 8px 8px 0;font-size:13px;color:#1E293B;margin-top:8px;"></div>
+    </div>
+
+    <!-- STEP 2: Effect Size -->
+    <div id="step2" class="hidden">
+      <h2>What effect size do you expect?</h2>
+      <p class="subtitle">You cannot know this exactly in advance. Use one of these three approaches to make a reasonable, defensible estimate.</p>
+
+      <button class="choice-btn" onclick="selectEffectSource('preset', this)">
+        <div class="radio-row"><div class="radio-circle"><div class="radio-dot"></div></div><div><div class="btn-label">Use a Standard Benchmark</div><div class="btn-desc">Small, medium, or large based on Cohen's conventions</div></div></div>
+      </button>
+      <button class="choice-btn" onclick="selectEffectSource('literature', this)">
+        <div class="radio-row"><div class="radio-circle"><div class="radio-dot"></div></div><div><div class="btn-label">I Found an Effect Size in Prior Studies</div><div class="btn-desc">Enter the d or r value from published research</div></div></div>
+      </button>
+      <button class="choice-btn" onclick="selectEffectSource('mcid', this)">
+        <div class="radio-row"><div class="radio-circle"><div class="radio-dot"></div></div><div><div class="btn-label">I Have a Clinically Meaningful Difference</div><div class="btn-desc">I know what difference would matter to my patients</div></div></div>
+      </button>
+
+      <div id="preset-panel" class="hidden section-card">
+        <h3>Select a benchmark:</h3>
+        <div class="small-btns" id="presetBtns"></div>
+        <div id="presetDesc" style="margin-top:10px;background:#E8F5E9;padding:8px 12px;border-radius:8px;font-size:13px;display:none;"></div>
+        <div class="tip"><strong>Tip:</strong> If unsure, start with medium. It is the most commonly found effect size in nursing intervention research.</div>
+      </div>
+
+      <div id="literature-panel" class="hidden section-card">
+        <h3 id="litLabel">Enter Cohen's d from your literature review:</h3>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+          <span id="litSymbol" style="font-weight:700;font-size:18px;color:#1A3E6B;">d =</span>
+          <input type="number" id="litInput" min="0.01" max="2" step="0.01" placeholder="e.g. 0.5" oninput="setEffectFromLit()">
+        </div>
+        <div class="tip"><strong>Tip:</strong> Use the effect size from a study with a similar population and intervention. If multiple studies exist, use the average or the most conservative (smallest) value.</div>
+      </div>
+
+      <div id="mcid-panel" class="hidden section-card">
+        <h3>Convert your clinically meaningful difference to an effect size:</h3>
+        <p style="font-size:12px;color:#64748B;margin:6px 0 12px;line-height:1.5;">Enter the smallest difference that would matter clinically and the standard deviation from prior literature. We will calculate Cohen's d for you.</p>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div><div style="font-size:11px;font-weight:700;color:#64748B;margin-bottom:4px;">Minimum meaningful difference</div><input type="number" id="mcidMean" step="any" placeholder="e.g. 45" oninput="calcMCID()"></div>
+          <div><div style="font-size:11px;font-weight:700;color:#64748B;margin-bottom:4px;">Standard deviation (from literature)</div><input type="number" id="mcidSD" step="any" placeholder="e.g. 90" oninput="calcMCID()"></div>
+        </div>
+        <div class="mcid-result" id="mcidResult">
+          <strong>Calculated Cohen's d = <span id="mcidVal"></span></strong>
+          <button class="use-btn" onclick="useMCID()">Use this value</button>
+        </div>
+        <div class="tip"><strong>Tip:</strong> Example: A 45-minute improvement in sleep time with a standard deviation of 90 minutes gives Cohen's d = 0.5, a medium effect.</div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Settings -->
+    <div id="step3" class="hidden">
+      <h2>Set your study parameters</h2>
+      <p class="subtitle">These are already set to the most commonly accepted values in nursing research. Adjust only if your proposal requires it.</p>
+
+      <div class="section-card" style="border-left-color:#1A3E6B;">
+        <h3>Significance Level (Alpha)</h3>
+        <p style="font-size:12px;color:#64748B;margin-bottom:10px;line-height:1.5;">Your tolerance for a false alarm (Type I error). A 0.05 level means you accept a 5% chance of saying something works when it does not.</p>
+        <div class="small-btns">
+          <button class="small-btn selected" id="alpha05" onclick="setAlpha('0.05', this)">alpha = 0.05<span class="sub">Standard</span></button>
+          <button class="small-btn" id="alpha01" onclick="setAlpha('0.01', this)">alpha = 0.01<span class="sub">More stringent</span></button>
+        </div>
+      </div>
+
+      <div class="section-card" style="border-left-color:#0D7377;">
+        <h3>Desired Power</h3>
+        <p style="font-size:12px;color:#64748B;margin-bottom:10px;line-height:1.5;">The probability your study will detect a real effect if one truly exists. Think of it as your pulse oximeter's sensitivity setting. Higher power means fewer missed findings but requires more participants.</p>
+        <div class="small-btns">
+          <button class="small-btn selected" id="pow80" onclick="setPower('0.80', this)">80% Power<span class="sub">Standard minimum</span></button>
+          <button class="small-btn" id="pow90" onclick="setPower('0.90', this)">90% Power<span class="sub">Higher sensitivity</span></button>
+        </div>
+        <div class="tip"><strong>Tip:</strong> For most EBP proposals, 80% power is acceptable and expected. Use 90% when missing a real effect would carry significant clinical consequences.</div>
+      </div>
+    </div>
+
+    <!-- STEP 4: Results -->
+    <div id="step4" class="hidden">
+      <h2>Your Sample Size Results</h2>
+      <p class="subtitle">Here is what the calculation tells you about your study design.</p>
+      <div class="result-badges" id="resultBadges"></div>
+      <div class="result-card blue" id="resultInterpret"></div>
+      <div class="result-card teal" id="resultProposal"></div>
+      <div class="result-card gold" id="resultCompare"></div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+      <button class="btn-back hidden" id="btnBack" onclick="goBack()">Back</button>
+      <div></div>
+      <button class="btn-next" id="btnNext" onclick="goNext()">Continue</button>
+    </div>
+  </div>
+  <p class="footnote">For educational planning purposes. Always verify final calculations with G*Power or a biostatistician before submitting a proposal.</p>
+</div>
+
+<script>
+const state = { studyType: null, effectSource: null, effectValue: null, alpha: '0.05', power: '0.80' };
+let currentStep = 0;
+const stepLabels = ['Study Type', 'Effect Size', 'Settings', 'Results'];
+
+const presetData = {
+  two_group: [
+    { val: '0.2', label: 'Small', sub: 'd = 0.2', desc: 'A subtle but real difference. Think a 2-point blood pressure change between groups.' },
+    { val: '0.5', label: 'Medium', sub: 'd = 0.5', desc: 'A moderate, noticeable difference a careful nurse would detect over time.' },
+    { val: '0.8', label: 'Large', sub: 'd = 0.8', desc: 'A large, obvious difference visible to any clinician on the floor.' }
+  ],
+  paired: [
+    { val: '0.2', label: 'Small', sub: 'd = 0.2', desc: 'A subtle pre-to-post change that requires careful measurement to confirm.' },
+    { val: '0.5', label: 'Medium', sub: 'd = 0.5', desc: 'A moderate before-and-after change a careful clinician would notice.' },
+    { val: '0.8', label: 'Large', sub: 'd = 0.8', desc: 'A dramatic improvement from baseline that any nurse would recognize.' }
+  ],
+  correlation: [
+    { val: '0.1', label: 'Small', sub: 'r = 0.1', desc: 'A subtle association between the two variables.' },
+    { val: '0.3', label: 'Medium', sub: 'r = 0.3', desc: 'A moderate, clinically noticeable relationship.' },
+    { val: '0.5', label: 'Large', sub: 'r = 0.5', desc: 'A strong, readily apparent association between the two variables.' }
+  ]
+};
+
+function renderProgress() {
+  const pb = document.getElementById('progressBar');
+  pb.innerHTML = '';
+  stepLabels.forEach((label, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'step-wrap';
+    const dot = document.createElement('div');
+    dot.className = 'step-dot ' + (i < currentStep ? 'done' : i === currentStep ? 'active' : 'inactive');
+    dot.textContent = i < currentStep ? '✓' : (i + 1);
+    const lbl = document.createElement('div');
+    lbl.className = 'step-label ' + (i === currentStep ? 'active' : 'inactive');
+    lbl.textContent = label;
+    wrap.appendChild(dot);
+    wrap.appendChild(lbl);
+    pb.appendChild(wrap);
+    if (i < stepLabels.length - 1) {
+      const conn = document.createElement('div');
+      conn.className = 'step-connector';
+      conn.style.background = i < currentStep ? '#0D7377' : '#CBD5E1';
+      pb.appendChild(conn);
+    }
+  });
 }
-const Z_ALPHA = { "0.05": 1.959964, "0.01": 2.576 };
-const Z_BETA  = { "0.80": 0.8416,   "0.90": 1.2816 };
 
-function calcTwoGroup(d, alpha, power) {
-  const za = Z_ALPHA[alpha], zb = Z_BETA[power];
+function updateNav() {
+  const back = document.getElementById('btnBack');
+  const next = document.getElementById('btnNext');
+  back.classList.toggle('hidden', currentStep === 0);
+  if (currentStep === 3) { next.style.display = 'none'; } else { next.style.display = 'block'; }
+  next.textContent = currentStep === 2 ? 'Calculate' : 'Continue';
+  const ready = canProceed();
+  next.classList.toggle('ready', ready);
+}
+
+function canProceed() {
+  if (currentStep === 0) return !!state.studyType;
+  if (currentStep === 1) return state.effectValue !== null && state.effectValue > 0;
+  if (currentStep === 2) return true;
+  return false;
+}
+
+function showStep(n) {
+  for (let i = 0; i < 4; i++) document.getElementById('step' + (i + 1)).classList.add('hidden');
+  document.getElementById('step' + (n + 1)).classList.remove('hidden');
+  currentStep = n;
+  renderProgress();
+  updateNav();
+  if (n === 3) buildResults();
+}
+
+function goNext() {
+  if (!canProceed()) return;
+  showStep(currentStep + 1);
+  if (currentStep === 1) buildPresets();
+}
+
+function goBack() { showStep(currentStep - 1); }
+
+function selectStudyType(type, btn) {
+  state.studyType = type;
+  state.effectValue = null;
+  document.querySelectorAll('#step1 .choice-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const labels = { 'two-group': 'Comparing Two Groups', 'paired': 'Before and After', 'correlation': 'Looking at a Relationship' };
+  const conf = document.getElementById('step1confirm');
+  conf.classList.remove('hidden');
+  conf.textContent = 'Good choice. For a ' + labels[type] + ' design, the next step is estimating your expected effect size.';
+  updateNav();
+}
+
+function selectEffectSource(source, btn) {
+  state.effectSource = source;
+  state.effectValue = null;
+  document.querySelectorAll('#step2 > .choice-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('preset-panel').classList.add('hidden');
+  document.getElementById('literature-panel').classList.add('hidden');
+  document.getElementById('mcid-panel').classList.add('hidden');
+  if (source === 'preset') { document.getElementById('preset-panel').classList.remove('hidden'); buildPresets(); }
+  if (source === 'literature') {
+    document.getElementById('literature-panel').classList.remove('hidden');
+    const isCorr = state.studyType === 'correlation';
+    document.getElementById('litLabel').textContent = 'Enter ' + (isCorr ? 'Pearson r from your literature review:' : "Cohen's d from your literature review:");
+    document.getElementById('litSymbol').textContent = (isCorr ? 'r' : 'd') + ' =';
+    document.getElementById('litInput').max = isCorr ? '0.99' : '2';
+    document.getElementById('litInput').placeholder = isCorr ? 'e.g. 0.3' : 'e.g. 0.5';
+    document.getElementById('litInput').value = '';
+  }
+  if (source === 'mcid') { document.getElementById('mcid-panel').classList.remove('hidden'); }
+  updateNav();
+}
+
+function buildPresets() {
+  const key = state.studyType === 'two-group' ? 'two_group' : state.studyType === 'paired' ? 'paired' : 'correlation';
+  const data = presetData[key];
+  const container = document.getElementById('presetBtns');
+  container.innerHTML = '';
+  data.forEach(p => {
+    const b = document.createElement('button');
+    b.className = 'small-btn' + (state.effectValue == p.val ? ' selected' : '');
+    b.innerHTML = p.label + '<span class="sub">' + p.sub + '</span>';
+    b.onclick = () => selectPreset(p.val, p.desc, b);
+    container.appendChild(b);
+  });
+}
+
+function selectPreset(val, desc, btn) {
+  state.effectValue = parseFloat(val);
+  document.querySelectorAll('#presetBtns .small-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const d = document.getElementById('presetDesc');
+  d.style.display = 'block';
+  d.textContent = desc;
+  updateNav();
+}
+
+function setEffectFromLit() {
+  const v = parseFloat(document.getElementById('litInput').value);
+  state.effectValue = (!isNaN(v) && v > 0) ? v : null;
+  updateNav();
+}
+
+function calcMCID() {
+  const mean = parseFloat(document.getElementById('mcidMean').value);
+  const sd = parseFloat(document.getElementById('mcidSD').value);
+  const res = document.getElementById('mcidResult');
+  if (!isNaN(mean) && !isNaN(sd) && sd > 0) {
+    const d = (mean / sd).toFixed(3);
+    document.getElementById('mcidVal').textContent = d;
+    res.style.display = 'block';
+  } else { res.style.display = 'none'; state.effectValue = null; updateNav(); }
+}
+
+function useMCID() {
+  const d = parseFloat(document.getElementById('mcidVal').textContent);
+  state.effectValue = d;
+  updateNav();
+}
+
+function setAlpha(val, btn) {
+  state.alpha = val;
+  document.querySelectorAll('#step3 .section-card:nth-child(1) .small-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function setPower(val, btn) {
+  state.power = val;
+  document.querySelectorAll('#step3 .section-card:nth-child(2) .small-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+// ---- Stats math ----
+const Z_ALPHA = { '0.05': 1.959964, '0.01': 2.576 };
+const Z_BETA  = { '0.80': 0.8416,   '0.90': 1.2816 };
+
+function calcTwoGroup(d) {
+  const za = Z_ALPHA[state.alpha], zb = Z_BETA[state.power];
   const n = Math.ceil(2 * Math.pow((za + zb) / d, 2));
   return { total: n, perGroup: Math.ceil(n / 2) };
 }
-function calcPaired(d, alpha, power) {
-  const za = Z_ALPHA[alpha], zb = Z_BETA[power];
-  const n = Math.ceil(Math.pow((za + zb) / d, 2));
-  return { total: n, perGroup: null };
+function calcPaired(d) {
+  const za = Z_ALPHA[state.alpha], zb = Z_BETA[state.power];
+  return { total: Math.ceil(Math.pow((za + zb) / d, 2)), perGroup: null };
 }
-function calcCorrelation(r, alpha, power) {
-  const za = Z_ALPHA[alpha], zb = Z_BETA[power];
+function calcCorrelation(r) {
+  const za = Z_ALPHA[state.alpha], zb = Z_BETA[state.power];
   const fz = 0.5 * Math.log((1 + r) / (1 - r));
-  const n = Math.ceil(Math.pow((za + zb) / fz, 2) + 3);
-  return { total: n, perGroup: null };
+  return { total: Math.ceil(Math.pow((za + zb) / fz, 2) + 3), perGroup: null };
+}
+function getResult(val) {
+  if (state.studyType === 'two-group') return calcTwoGroup(val);
+  if (state.studyType === 'paired') return calcPaired(val);
+  return calcCorrelation(val);
 }
 
-const COLORS = {
-  navy: "#1A3E6B",
-  blue: "#2E75B6",
-  lightBlue: "#D5E8F0",
-  paleBlue: "#EBF4FB",
-  teal: "#0D7377",
-  red: "#8B1A1A",
-  lightRed: "#FFEBEE",
-  green: "#1B5E20",
-  lightGreen: "#E8F5E9",
-  gold: "#B8860B",
-  lightGold: "#FFFDE7",
-  white: "#FFFFFF",
-  offWhite: "#F8FAFC",
-  gray: "#64748B",
-  lightGray: "#F1F5F9",
-  text: "#1E293B",
-};
-
-const STEP_LABELS = ["Study Type", "Effect Size", "Settings", "Results"];
-
-function ProgressBar({ step }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", marginBottom: 32, padding: "0 8px" }}>
-      {STEP_LABELS.map((label, i) => {
-        const active = i === step;
-        const done = i < step;
-        return (
-          <div key={i} style={{ display: "flex", alignItems: "center", flex: i < STEP_LABELS.length - 1 ? 1 : "none" }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-              <div style={{
-                width: 36, height: 36, borderRadius: "50%",
-                background: done ? COLORS.teal : active ? COLORS.blue : COLORS.lightGray,
-                border: `2px solid ${done ? COLORS.teal : active ? COLORS.blue : "#CBD5E1"}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: done || active ? COLORS.white : COLORS.gray,
-                fontWeight: 700, fontSize: 14,
-                transition: "all 0.3s"
-              }}>
-                {done ? "✓" : i + 1}
-              </div>
-              <span style={{ fontSize: 11, fontWeight: active ? 700 : 400, color: active ? COLORS.blue : COLORS.gray, whiteSpace: "nowrap" }}>{label}</span>
-            </div>
-            {i < STEP_LABELS.length - 1 && (
-              <div style={{ flex: 1, height: 2, background: done ? COLORS.teal : "#CBD5E1", margin: "0 8px", marginBottom: 20, transition: "background 0.3s" }} />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
+function sizeLabel(val) {
+  if (state.studyType === 'correlation') return val >= 0.5 ? 'large' : val >= 0.3 ? 'medium' : 'small';
+  return val >= 0.8 ? 'large' : val >= 0.5 ? 'medium' : 'small';
 }
 
-function Card({ children, accent, style = {} }) {
-  return (
-    <div style={{
-      background: COLORS.white,
-      borderRadius: 12,
-      padding: "24px 28px",
-      border: `1px solid ${COLORS.lightBlue}`,
-      borderLeft: accent ? `5px solid ${accent}` : `1px solid ${COLORS.lightBlue}`,
-      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-      marginBottom: 16,
-      ...style
-    }}>
-      {children}
-    </div>
-  );
-}
+function buildResults() {
+  const val = state.effectValue;
+  const r = getResult(val);
+  const typeLabels = { 'two-group': 'Comparing Two Groups', 'paired': 'Before and After', 'correlation': 'Looking at a Relationship' };
+  const sym = state.studyType === 'correlation' ? 'r' : 'd';
+  const sl = sizeLabel(val);
 
-function ChoiceButton({ selected, onClick, children, description }) {
-  return (
-    <button onClick={onClick} style={{
-      display: "block", width: "100%", textAlign: "left",
-      padding: "14px 18px", marginBottom: 10, borderRadius: 10,
-      border: `2px solid ${selected ? COLORS.blue : "#CBD5E1"}`,
-      background: selected ? COLORS.paleBlue : COLORS.white,
-      cursor: "pointer", transition: "all 0.2s",
-      boxShadow: selected ? `0 0 0 3px ${COLORS.lightBlue}` : "none"
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{
-          width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
-          border: `2px solid ${selected ? COLORS.blue : "#CBD5E1"}`,
-          background: selected ? COLORS.blue : "transparent",
-          display: "flex", alignItems: "center", justifyContent: "center"
-        }}>
-          {selected && <div style={{ width: 8, height: 8, borderRadius: "50%", background: COLORS.white }} />}
-        </div>
-        <div>
-          <div style={{ fontWeight: 600, color: COLORS.text, fontSize: 15 }}>{children}</div>
-          {description && <div style={{ fontSize: 13, color: COLORS.gray, marginTop: 2 }}>{description}</div>}
-        </div>
-      </div>
-    </button>
-  );
-}
-
-function SmallChoiceButton({ selected, onClick, children, sub }) {
-  return (
-    <button onClick={onClick} style={{
-      padding: "10px 16px", borderRadius: 8, marginRight: 10, marginBottom: 10,
-      border: `2px solid ${selected ? COLORS.blue : "#CBD5E1"}`,
-      background: selected ? COLORS.paleBlue : COLORS.white,
-      cursor: "pointer", fontWeight: selected ? 700 : 500,
-      color: selected ? COLORS.blue : COLORS.text, fontSize: 14,
-      transition: "all 0.2s"
-    }}>
-      {children}
-      {sub && <div style={{ fontSize: 11, color: COLORS.gray, fontWeight: 400 }}>{sub}</div>}
-    </button>
-  );
-}
-
-function Tip({ children }) {
-  return (
-    <div style={{
-      background: COLORS.lightGold, borderLeft: `4px solid ${COLORS.gold}`,
-      padding: "10px 14px", borderRadius: "0 8px 8px 0", fontSize: 13, color: "#5D4037", marginTop: 12
-    }}>
-      <span style={{ fontWeight: 700 }}>Tip: </span>{children}
-    </div>
-  );
-}
-
-function ResultBadge({ value, label, color }) {
-  return (
-    <div style={{
-      background: color, borderRadius: 12, padding: "20px 24px",
-      textAlign: "center", flex: 1, minWidth: 140
-    }}>
-      <div style={{ fontSize: 42, fontWeight: 800, color: COLORS.navy, lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: 13, color: COLORS.gray, marginTop: 6, fontWeight: 500 }}>{label}</div>
-    </div>
-  );
-}
-
-const STUDY_TYPES = [
-  {
-    id: "two-group",
-    label: "Comparing Two Groups",
-    description: "e.g., patients who received an intervention vs. those who did not (control group)",
-    uses: "Cohen's d"
-  },
-  {
-    id: "paired",
-    label: "Before and After (Same Patients)",
-    description: "e.g., measuring the same patients before and after your intervention",
-    uses: "Cohen's d"
-  },
-  {
-    id: "correlation",
-    label: "Looking at a Relationship",
-    description: "e.g., is there an association between two variables, like sleep hours and anxiety scores?",
-    uses: "Pearson r"
-  }
-];
-
-const EFFECT_SOURCES = [
-  { id: "preset", label: "Use a Standard Benchmark", description: "Small, medium, or large based on Cohen's conventions" },
-  { id: "literature", label: "I Found an Effect Size in Prior Studies", description: "Enter the d or r value from published research" },
-  { id: "mcid", label: "I Have a Clinically Meaningful Difference", description: "I know what difference would matter to my patients" }
-];
-
-function Step1({ state, set }) {
-  return (
-    <div>
-      <h2 style={{ color: COLORS.navy, fontSize: 22, fontWeight: 700, marginBottom: 6 }}>What kind of study are you planning?</h2>
-      <p style={{ color: COLORS.gray, marginBottom: 20, fontSize: 14 }}>Choose the design that best matches your EBP proposal or quantitative project.</p>
-      {STUDY_TYPES.map(t => (
-        <ChoiceButton key={t.id} selected={state.studyType === t.id} onClick={() => set({ ...state, studyType: t.id, effectSource: null, effectValue: "", mcidMean: "", mcidSD: "" })}>
-          {t.label}
-          <span style={{ marginLeft: 8, fontSize: 12, color: COLORS.gray, fontWeight: 400 }}>({t.uses})</span>
-        </ChoiceButton>
-      ))}
-      {state.studyType && (
-        <Card accent={COLORS.teal} style={{ marginTop: 8 }}>
-          <div style={{ fontSize: 13, color: COLORS.text }}>
-            <strong style={{ color: COLORS.teal }}>Good choice.</strong> For a <strong>{STUDY_TYPES.find(t => t.id === state.studyType)?.label}</strong> design, we will calculate the sample size you need using the appropriate formula. Next we will determine your expected effect size.
-          </div>
-        </Card>
-      )}
-    </div>
-  );
-}
-
-function Step2({ state, set }) {
-  const isCorrelation = state.studyType === "correlation";
-  const label = isCorrelation ? "r" : "d";
-
-  const presets = isCorrelation
-    ? [{ val: "0.1", label: "Small", sub: "r = 0.1" }, { val: "0.3", label: "Medium", sub: "r = 0.3" }, { val: "0.5", label: "Large", sub: "r = 0.5" }]
-    : [{ val: "0.2", label: "Small", sub: "d = 0.2" }, { val: "0.5", label: "Medium", sub: "d = 0.5" }, { val: "0.8", label: "Large", sub: "d = 0.8" }];
-
-  const presetDescriptions = isCorrelation
-    ? { "0.1": "A subtle association, like a 2-3 point difference in a 100-point scale.", "0.3": "A moderate, clinically noticeable relationship.", "0.5": "A strong, readily apparent association." }
-    : { "0.2": "A subtle but real difference. Think a 2-point blood pressure change.", "0.5": "A moderate, noticeable difference a careful nurse would detect.", "0.8": "A large, obvious difference visible to any clinician on the floor." };
-
-  function computeMCID() {
-    const mean = parseFloat(state.mcidMean), sd = parseFloat(state.mcidSD);
-    if (!isNaN(mean) && !isNaN(sd) && sd > 0) {
-      return (mean / sd).toFixed(3);
-    }
-    return null;
-  }
-
-  return (
-    <div>
-      <h2 style={{ color: COLORS.navy, fontSize: 22, fontWeight: 700, marginBottom: 6 }}>What effect size do you expect?</h2>
-      <p style={{ color: COLORS.gray, marginBottom: 20, fontSize: 14 }}>
-        You cannot know this exactly in advance. Use one of these three approaches to make a reasonable, defensible estimate.
-      </p>
-
-      {EFFECT_SOURCES.map(s => (
-        <ChoiceButton key={s.id} selected={state.effectSource === s.id} onClick={() => set({ ...state, effectSource: s.id, effectValue: "" })}>
-          {s.label}
-        </ChoiceButton>
-      ))}
-
-      {state.effectSource === "preset" && (
-        <Card accent={COLORS.blue} style={{ marginTop: 4 }}>
-          <div style={{ fontWeight: 600, marginBottom: 10, fontSize: 14 }}>Select an effect size based on Cohen's benchmarks:</div>
-          <div style={{ display: "flex", flexWrap: "wrap" }}>
-            {presets.map(p => (
-              <SmallChoiceButton key={p.val} selected={state.effectValue === p.val} onClick={() => set({ ...state, effectValue: p.val })} sub={p.sub}>
-                {p.label}
-              </SmallChoiceButton>
-            ))}
-          </div>
-          {state.effectValue && (
-            <div style={{ marginTop: 10, fontSize: 13, color: COLORS.text, background: COLORS.lightGreen, padding: "8px 12px", borderRadius: 8 }}>
-              {presetDescriptions[state.effectValue]}
-            </div>
-          )}
-          <Tip>If you are unsure, start with medium. It is the most commonly found effect size in nursing intervention research.</Tip>
-        </Card>
-      )}
-
-      {state.effectSource === "literature" && (
-        <Card accent={COLORS.blue} style={{ marginTop: 4 }}>
-          <div style={{ fontWeight: 600, marginBottom: 8, fontSize: 14 }}>Enter the {isCorrelation ? "correlation coefficient (r)" : "Cohen's d"} from your literature review:</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-            <span style={{ fontWeight: 700, fontSize: 18, color: COLORS.navy }}>{label} =</span>
-            <input
-              type="number" min="0.01" max={isCorrelation ? "0.99" : "2"} step="0.01"
-              value={state.effectValue}
-              onChange={e => set({ ...state, effectValue: e.target.value })}
-              placeholder={isCorrelation ? "e.g. 0.3" : "e.g. 0.5"}
-              style={{ padding: "8px 12px", borderRadius: 8, border: `2px solid ${COLORS.lightBlue}`, fontSize: 16, width: 120, outline: "none" }}
-            />
-          </div>
-          <Tip>Use the effect size reported in a study with a similar population and intervention. If multiple studies exist, use the average or the most conservative (smallest) value.</Tip>
-        </Card>
-      )}
-
-      {state.effectSource === "mcid" && (
-        <Card accent={COLORS.blue} style={{ marginTop: 4 }}>
-          <div style={{ fontWeight: 600, marginBottom: 6, fontSize: 14 }}>Convert your clinically meaningful difference to an effect size:</div>
-          <p style={{ fontSize: 13, color: COLORS.gray, marginBottom: 12 }}>
-            Enter the minimum difference that would matter clinically and the standard deviation from prior literature. We will calculate Cohen's d for you.
-          </p>
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 8 }}>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.gray, marginBottom: 4 }}>Minimum meaningful difference</div>
-              <input type="number" step="any" value={state.mcidMean} onChange={e => set({ ...state, mcidMean: e.target.value, effectValue: "" })}
-                placeholder="e.g. 45" style={{ padding: "8px 12px", borderRadius: 8, border: `2px solid ${COLORS.lightBlue}`, fontSize: 15, width: 120 }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.gray, marginBottom: 4 }}>Standard deviation (from literature)</div>
-              <input type="number" step="any" value={state.mcidSD} onChange={e => set({ ...state, mcidSD: e.target.value, effectValue: "" })}
-                placeholder="e.g. 90" style={{ padding: "8px 12px", borderRadius: 8, border: `2px solid ${COLORS.lightBlue}`, fontSize: 15, width: 120 }} />
-            </div>
-          </div>
-          {computeMCID() && (
-            <div style={{ background: COLORS.lightGreen, padding: "10px 14px", borderRadius: 8, fontSize: 14, marginBottom: 8 }}>
-              <strong>Calculated Cohen's d = {computeMCID()}</strong>
-              <button onClick={() => set({ ...state, effectValue: computeMCID() })} style={{
-                marginLeft: 16, padding: "4px 12px", borderRadius: 6, background: COLORS.teal, color: COLORS.white, border: "none", cursor: "pointer", fontSize: 13
-              }}>Use this value</button>
-            </div>
-          )}
-          <Tip>Example: A 45-minute improvement in sleep time with a standard deviation of 90 minutes gives Cohen's d = 0.5, a medium effect.</Tip>
-        </Card>
-      )}
-    </div>
-  );
-}
-
-function Step3({ state, set }) {
-  return (
-    <div>
-      <h2 style={{ color: COLORS.navy, fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Set your study parameters</h2>
-      <p style={{ color: COLORS.gray, marginBottom: 20, fontSize: 14 }}>These are the standard thresholds used in nursing research. They are already set to the most commonly accepted values. You can adjust if needed.</p>
-
-      <Card accent={COLORS.blue}>
-        <div style={{ fontWeight: 700, color: COLORS.navy, marginBottom: 12, fontSize: 15 }}>Significance Level (Alpha)</div>
-        <p style={{ fontSize: 13, color: COLORS.gray, marginBottom: 12 }}>
-          Alpha is your tolerance for a false alarm (Type I error). A 0.05 level means you accept a 5% chance of saying something works when it does not.
-        </p>
-        <div style={{ display: "flex", flexWrap: "wrap" }}>
-          <SmallChoiceButton selected={state.alpha === "0.05"} onClick={() => set({ ...state, alpha: "0.05" })} sub="Standard">alpha = 0.05</SmallChoiceButton>
-          <SmallChoiceButton selected={state.alpha === "0.01"} onClick={() => set({ ...state, alpha: "0.01" })} sub="More stringent">alpha = 0.01</SmallChoiceButton>
-        </div>
-      </Card>
-
-      <Card accent={COLORS.teal}>
-        <div style={{ fontWeight: 700, color: COLORS.navy, marginBottom: 12, fontSize: 15 }}>Desired Power (1 - Beta)</div>
-        <p style={{ fontSize: 13, color: COLORS.gray, marginBottom: 12 }}>
-          Power is the probability your study will detect a real effect if one truly exists. Think of it as your pulse oximeter's sensitivity setting. Higher power means fewer missed findings (fewer Type II errors) but requires more participants.
-        </p>
-        <div style={{ display: "flex", flexWrap: "wrap" }}>
-          <SmallChoiceButton selected={state.power === "0.80"} onClick={() => set({ ...state, power: "0.80" })} sub="Standard minimum">80% Power</SmallChoiceButton>
-          <SmallChoiceButton selected={state.power === "0.90"} onClick={() => set({ ...state, power: "0.90" })} sub="Higher sensitivity">90% Power</SmallChoiceButton>
-        </div>
-        <Tip>For most EBP proposals, 80% power is acceptable and expected. Use 90% when missing a real effect would carry significant clinical consequences.</Tip>
-      </Card>
-    </div>
-  );
-}
-
-function Step4({ state }) {
-  const isCorrelation = state.studyType === "correlation";
-  const effectVal = parseFloat(state.effectValue);
-  let result = null;
-
-  if (!isNaN(effectVal) && effectVal > 0) {
-    if (state.studyType === "two-group") result = calcTwoGroup(effectVal, state.alpha, state.power);
-    else if (state.studyType === "paired") result = calcPaired(effectVal, state.alpha, state.power);
-    else if (state.studyType === "correlation") result = calcCorrelation(effectVal, state.alpha, state.power);
-  }
-
-  const effectLabel = isCorrelation ? `r = ${effectVal}` : `d = ${effectVal}`;
-  const studyLabel = STUDY_TYPES.find(t => t.id === state.studyType)?.label;
-
-  let sizeLabel = "small";
-  if (!isCorrelation) {
-    if (effectVal >= 0.5) sizeLabel = effectVal >= 0.8 ? "large" : "medium";
-  } else {
-    if (effectVal >= 0.3) sizeLabel = effectVal >= 0.5 ? "large" : "medium";
-  }
-
-  const sizeColors = { small: COLORS.lightGold, medium: COLORS.lightBlue, large: COLORS.lightGreen };
-
-  return (
-    <div>
-      <h2 style={{ color: COLORS.navy, fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Your Sample Size Results</h2>
-      <p style={{ color: COLORS.gray, marginBottom: 20, fontSize: 14 }}>Here is what the calculation tells you about your study design.</p>
-
-      {result ? (
-        <>
-          <div style={{ display: "flex", gap: 16, marginBottom: 20, flexWrap: "wrap" }}>
-            <ResultBadge value={result.total} label="Total participants needed" color={COLORS.lightBlue} />
-            {result.perGroup && <ResultBadge value={result.perGroup} label="Per group" color={COLORS.lightGreen} />}
-            <ResultBadge value={`${parseFloat(state.power) * 100}%`} label="Statistical power" color={COLORS.lightGold} />
-          </div>
-
-          <Card accent={COLORS.navy}>
-            <div style={{ fontWeight: 700, color: COLORS.navy, marginBottom: 10, fontSize: 15 }}>What this means in nursing terms:</div>
-            <p style={{ fontSize: 14, color: COLORS.text, lineHeight: 1.7 }}>
-              For a <strong>{studyLabel}</strong> study expecting a <strong>{sizeLabel} effect ({effectLabel})</strong>, with a significance level of <strong>alpha = {state.alpha}</strong> and <strong>{parseFloat(state.power) * 100}% power</strong>, you will need to enroll at least <strong style={{ color: COLORS.navy, fontSize: 16 }}>{result.total} participants{result.perGroup ? ` (${result.perGroup} in each group)` : ""}</strong>.
-            </p>
-            <p style={{ fontSize: 14, color: COLORS.text, marginTop: 10, lineHeight: 1.7 }}>
-              This means if the effect you estimated truly exists in your population, your study has a <strong>{parseFloat(state.power) * 100}% chance of detecting it</strong>. If your sample falls short of this number, your risk of a Type II error, missing a real effect, increases significantly.
-            </p>
-          </Card>
-
-          <Card accent={COLORS.teal}>
-            <div style={{ fontWeight: 700, color: COLORS.teal, marginBottom: 10, fontSize: 15 }}>What to write in your proposal:</div>
-            <div style={{ background: COLORS.lightGray, borderRadius: 8, padding: "12px 16px", fontSize: 13, color: COLORS.text, lineHeight: 1.8, fontStyle: "italic" }}>
-              "A power analysis was conducted using G*Power (Faul et al., 2007). Based on a {sizeLabel} expected effect size ({effectLabel}) derived from prior literature, an alpha level of {state.alpha}, and a desired power of {state.power}, a minimum sample size of {result.total} participants{result.perGroup ? ` (${result.perGroup} per group)` : ""} is required to achieve adequate statistical power."
-            </div>
-            <div style={{ fontSize: 12, color: COLORS.gray, marginTop: 8 }}>
-              Reference: Faul, F., Erdfelder, E., Lang, A.-G., &amp; Buchner, A. (2007). G*Power 3: A flexible statistical power analysis program for the social, behavioral, and biomedical sciences. <em>Behavior Research Methods, 39</em>(2), 175-191. https://doi.org/10.3758/BF03193146
-            </div>
-          </Card>
-
-          <Card accent={COLORS.gold}>
-            <div style={{ fontWeight: 700, color: COLORS.gold, marginBottom: 10, fontSize: 15 }}>Compare effect sizes side by side:</div>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              {(isCorrelation ? ["0.1", "0.3", "0.5"] : ["0.2", "0.5", "0.8"]).map(v => {
-                const r = isCorrelation ? calcCorrelation(parseFloat(v), state.alpha, state.power)
-                  : state.studyType === "two-group" ? calcTwoGroup(parseFloat(v), state.alpha, state.power)
-                  : calcPaired(parseFloat(v), state.alpha, state.power);
-                const isCurrentVal = parseFloat(v) === effectVal;
-                return (
-                  <div key={v} style={{
-                    background: isCurrentVal ? COLORS.paleBlue : COLORS.lightGray,
-                    border: `2px solid ${isCurrentVal ? COLORS.blue : "#CBD5E1"}`,
-                    borderRadius: 10, padding: "10px 16px", textAlign: "center", minWidth: 100
-                  }}>
-                    <div style={{ fontSize: 12, color: COLORS.gray }}>{isCorrelation ? "r" : "d"} = {v}</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: COLORS.navy }}>{r.total}</div>
-                    <div style={{ fontSize: 11, color: COLORS.gray }}>participants</div>
-                  </div>
-                );
-              })}
-            </div>
-            <div style={{ fontSize: 12, color: COLORS.gray, marginTop: 8 }}>
-              Notice how dramatically sample size changes with effect size. This is why your effect size estimate matters so much in study planning.
-            </div>
-          </Card>
-        </>
-      ) : (
-        <Card accent={COLORS.red}>
-          <div style={{ color: COLORS.red, fontWeight: 600 }}>Please go back and enter a valid effect size to see your results.</div>
-        </Card>
-      )}
-    </div>
-  );
-}
-
-export default function App() {
-  const [step, setStep] = useState(0);
-  const [state, setState] = useState({
-    studyType: null, effectSource: null, effectValue: "",
-    mcidMean: "", mcidSD: "", alpha: "0.05", power: "0.80"
+  // Badges
+  const badges = document.getElementById('resultBadges');
+  badges.innerHTML = '';
+  const badgeData = [
+    { num: r.total, lbl: 'Total participants needed', color: '#D5E8F0' },
+    ...(r.perGroup ? [{ num: r.perGroup, lbl: 'Per group', color: '#E8F5E9' }] : []),
+    { num: (parseFloat(state.power) * 100) + '%', lbl: 'Statistical power', color: '#FFFDE7' }
+  ];
+  badgeData.forEach(b => {
+    badges.innerHTML += '<div class="badge" style="background:' + b.color + '"><div class="num">' + b.num + '</div><div class="lbl">' + b.lbl + '</div></div>';
   });
 
-  const canNext = () => {
-    if (step === 0) return !!state.studyType;
-    if (step === 1) return state.effectValue !== "" && !isNaN(parseFloat(state.effectValue)) && parseFloat(state.effectValue) > 0;
-    if (step === 2) return !!state.alpha && !!state.power;
-    return false;
-  };
+  // Interpretation
+  const perGrpText = r.perGroup ? ' (' + r.perGroup + ' in each group)' : '';
+  document.getElementById('resultInterpret').innerHTML =
+    '<h3>What this means in nursing terms:</h3>' +
+    '<p>For a <strong>' + typeLabels[state.studyType] + '</strong> study expecting a <strong>' + sl + ' effect (' + sym + ' = ' + val + ')</strong>, with alpha = <strong>' + state.alpha + '</strong> and <strong>' + (parseFloat(state.power) * 100) + '% power</strong>, you need to enroll at least <strong style="font-size:16px;color:#1A3E6B;">' + r.total + ' participants' + perGrpText + '</strong>.</p>' +
+    '<p style="margin-top:10px;">If the effect you estimated truly exists, your study has a <strong>' + (parseFloat(state.power) * 100) + '% chance of detecting it</strong>. A smaller sample significantly increases your risk of a Type II error.</p>';
 
-  return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #EBF4FB 0%, #F8FAFC 50%, #EBF4FB 100%)", fontFamily: "'Georgia', serif", padding: 20 }}>
-      <div style={{ maxWidth: 700, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 32, padding: "24px 0 8px" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 3, color: COLORS.blue, textTransform: "uppercase", marginBottom: 8 }}>Nursing Research Tools</div>
-          <h1 style={{ color: COLORS.navy, fontSize: 28, fontWeight: 800, margin: "0 0 8px", lineHeight: 1.2 }}>Sample Size Calculator</h1>
-          <p style={{ color: COLORS.gray, fontSize: 14, margin: 0 }}>Designed for nurses planning quantitative EBP proposals</p>
-        </div>
+  // Proposal text
+  document.getElementById('resultProposal').innerHTML =
+    '<h3>What to write in your proposal:</h3>' +
+    '<div class="proposal-box">"A power analysis was conducted using G*Power (Faul et al., 2007). Based on a ' + sl + ' expected effect size (' + sym + ' = ' + val + ') derived from prior literature, an alpha level of ' + state.alpha + ', and a desired power of ' + state.power + ', a minimum sample size of ' + r.total + ' participants' + perGrpText + ' is required to achieve adequate statistical power."</div>' +
+    '<div class="ref-text">Reference: Faul, F., Erdfelder, E., Lang, A.-G., &amp; Buchner, A. (2007). G*Power 3: A flexible statistical power analysis program for the social, behavioral, and biomedical sciences. <em>Behavior Research Methods, 39</em>(2), 175-191. https://doi.org/10.3758/BF03193146</div>';
 
-        <div style={{ background: COLORS.white, borderRadius: 16, padding: "28px 32px", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: `1px solid ${COLORS.lightBlue}` }}>
-          <ProgressBar step={step} />
+  // Compare grid
+  const vals = state.studyType === 'correlation' ? ['0.1', '0.3', '0.5'] : ['0.2', '0.5', '0.8'];
+  let grid = '<div class="compare-grid">';
+  vals.forEach(v => {
+    const rv = getResult(parseFloat(v));
+    const cur = parseFloat(v) === val;
+    grid += '<div class="compare-cell ' + (cur ? 'current' : '') + '"><div class="c-label">' + sym + ' = ' + v + '</div><div class="c-num">' + rv.total + '</div><div class="c-sub">participants</div></div>';
+  });
+  grid += '</div><p style="font-size:12px;color:#64748B;margin-top:8px;">Notice how dramatically sample size changes with effect size. This is why your estimate matters so much.</p>';
+  document.getElementById('resultCompare').innerHTML = '<h3>Compare effect sizes side by side:</h3>' + grid;
 
-          {step === 0 && <Step1 state={state} set={setState} />}
-          {step === 1 && <Step2 state={state} set={setState} />}
-          {step === 2 && <Step3 state={state} set={setState} />}
-          {step === 3 && <Step4 state={state} />}
-
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 28, paddingTop: 20, borderTop: `1px solid ${COLORS.lightBlue}` }}>
-            {step > 0 ? (
-              <button onClick={() => setStep(step - 1)} style={{
-                padding: "10px 24px", borderRadius: 8, border: `2px solid ${COLORS.lightBlue}`,
-                background: COLORS.white, color: COLORS.navy, fontWeight: 600, cursor: "pointer", fontSize: 14
-              }}>Back</button>
-            ) : <div />}
-            {step < 3 && (
-              <button onClick={() => canNext() && setStep(step + 1)} style={{
-                padding: "10px 28px", borderRadius: 8, border: "none",
-                background: canNext() ? COLORS.blue : "#CBD5E1",
-                color: COLORS.white, fontWeight: 700, cursor: canNext() ? "pointer" : "not-allowed",
-                fontSize: 14, transition: "background 0.2s"
-              }}>
-                {step === 2 ? "Calculate" : "Continue"}
-              </button>
-            )}
-            {step === 3 && (
-              <button onClick={() => { setStep(0); setState({ studyType: null, effectSource: null, effectValue: "", mcidMean: "", mcidSD: "", alpha: "0.05", power: "0.80" }); }} style={{
-                padding: "10px 28px", borderRadius: 8, border: "none",
-                background: COLORS.teal, color: COLORS.white, fontWeight: 700, cursor: "pointer", fontSize: 14
-              }}>Start Over</button>
-            )}
-          </div>
-        </div>
-
-        <div style={{ textAlign: "center", marginTop: 16, fontSize: 12, color: COLORS.gray }}>
-          This tool is for educational planning purposes. Always verify final calculations with G*Power or a biostatistician before submitting a proposal.
-        </div>
-      </div>
-    </div>
-  );
+  // Nav
+  document.getElementById('btnNext').style.display = 'none';
+  const back = document.getElementById('btnBack');
+  back.classList.remove('hidden');
+  const nav = document.querySelector('.nav');
+  if (!document.getElementById('btnRestart')) {
+    const rb = document.createElement('button');
+    rb.className = 'btn-restart';
+    rb.id = 'btnRestart';
+    rb.textContent = 'Start Over';
+    rb.onclick = () => {
+      state.studyType = null; state.effectSource = null; state.effectValue = null; state.alpha = '0.05'; state.power = '0.80';
+      document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+      document.getElementById('step1confirm').classList.add('hidden');
+      document.getElementById('preset-panel').classList.add('hidden');
+      document.getElementById('literature-panel').classList.add('hidden');
+      document.getElementById('mcid-panel').classList.add('hidden');
+      document.getElementById('mcidResult').style.display = 'none';
+      document.getElementById('litInput').value = '';
+      document.getElementById('mcidMean').value = '';
+      document.getElementById('mcidSD').value = '';
+      document.getElementById('btnNext').style.display = 'block';
+      rb.remove();
+      showStep(0);
+    };
+    nav.appendChild(rb);
+  }
 }
+
+// Init
+renderProgress();
+updateNav();
+</script>
+</body>
+</html>
